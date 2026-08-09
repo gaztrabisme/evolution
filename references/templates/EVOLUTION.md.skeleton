@@ -1,0 +1,25 @@
+# Evolution Log — <skill-name>
+
+The loop that turns real use into skill improvements. Mechanism: `../evolution/references/loop.md`. Harvest source: <what real traces feed this skill>.
+
+---
+
+## Evolution 1 — <YYYY-MM-DD> — <one-line theme (usually: birth + first dogfood)>
+
+### Harvest scope
+- <what traces / which dogfood, why representative>. Classify: authored (own practice) or distilled (docs → ships PENDING).
+
+### Patterns found
+Ranked (Impact ÷ Effort), with the proof each bit:
+1. **<pattern>** — Impact: H/M/L, Effort: H/M/L. <the concrete thing that went wrong / was missing>.
+2. …
+
+### Hypotheses applied
+1. **<specific edit: file + change>** — closes pattern <n>.
+2. …
+
+Not modified (validated as already-sound): <what you deliberately left>.
+
+### Validation results (settled by a later run's step 0)
+- [ ] <the change is actually exercised in a real trace, no new friction>
+- **Verdict: PENDING** — <why it's not yet KEEP: single trace / distilled / unvalidated>.
