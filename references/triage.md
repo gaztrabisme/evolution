@@ -1,12 +1,12 @@
 # Triage — picking which skills to evolve
 
-The loop assumes you already know what to work on. Across a constellation of ~18 skills you don't. Triage is the step that turns "evolve my skills" into a defensible short list, and its output is **evidence, not a ranking you have to trust**.
+The loop assumes you already know what to work on. Across 15 constellation skills you don't. Triage is the step that turns "evolve my skills" into a defensible short list, and its output is **evidence, not a ranking you have to trust**.
 
 `scripts/triage.py` computes the signals. This file says what they mean and how to choose. The script proposes; the selection agent disposes.
 
 ## The gate that comes first
 
-**No new traces since the last entry → do not evolve that skill.** Not "low priority" — excluded. Evolving a skill nothing has used since its last harvest means inventing patterns, and an invented pattern applied as a real edit is the failure mode this whole discipline exists to prevent. `dev/modes/evolve.md` stated it as "when NOT to evolve: after a single build, mid-build, when traces are sparse." It is a gate, not a preference.
+**No new traces since the last entry → do not evolve that skill.** Not "low priority" — excluded. Evolving a skill nothing has used since its last harvest means inventing patterns, and an invented pattern applied as a real edit is the failure mode this whole discipline exists to prevent. The retired `dev` evolve mode stated it as "when NOT to evolve: after a single build, mid-build, when traces are sparse." It is a gate, not a preference.
 
 The one exception: a skill with **no ledger at all** is always a candidate, because the missing artifact is itself the finding.
 
@@ -17,7 +17,7 @@ The one exception: a skill with **no ledger at all** is always a candidate, beca
 | **Validation debt** | unchecked `- [ ]` and `PENDING` verdicts in `<skill>/EVOLUTION.md` | Open questions the loop already committed to answering. Highest value because settling them is cheap and it is the half that never runs. | Highest |
 | **Usage since last entry** | `Skill` tool_use entries in `~/.claude/projects/**/*.jsonl`; project tags in `~/.claude/history.jsonl` | **The gate.** Zero → excluded. Also the denominator for everything else: 40 uses with no friction is a different signal from 2 uses with no friction. | Gate |
 | **Undigested drift** | `git -C <skill> log --since=<last entry date>` | Edits made outside the loop. Each is an undocumented hypothesis — someone changed the skill and no ledger records why or what would falsify it. | High |
-| **Friction markers** | `history.jsonl` `.display` fields and user turns in transcripts, matched against the friction lexicon | The "that was unnecessary" / "too heavy" / "actually, no" signal. `dev/modes/evolve.md` says act on a repeatedly-skipped gate *immediately*, without waiting for a formal cycle. | High |
+| **Friction markers** | `history.jsonl` `.display` fields and user turns in transcripts, matched against the friction lexicon | The "that was unnecessary" / "too heavy" / "actually, no" signal. The retired `dev` evolve mode said to act on a repeatedly-skipped gate *immediately*, without waiting for a formal cycle. | High |
 | **Discoverability** | `~/.claude/read-once/stats.jsonl` filtered to `Documents/Work/Skills/` | Per-file read counts. A reference with zero reads is either dead weight (Wu Wei: trim it) or undiscoverable (nothing points at it). Distinguish by grepping whether `SKILL.md` links it. | Medium |
 | **Missing ledger** | no `EVOLUTION.md` on a skill whose `SKILL.md` claims the spine | Integrity gap: the skill declared a gate and ships no artifact for it. | Always a candidate |
 | **Age** | days since last entry | Weak on its own. A stable skill that nothing has needed to change is *working*, not neglected. Use only to break ties. | Lowest |
@@ -32,7 +32,13 @@ That makes step 2 of the non-adoption ladder — *"was it discoverable?"* — an
 - Reference exists, **nothing links it**, zero reads → orphan. Trim it (Wu Wei) or wire it in.
 - Reference read often, change still unused → now you have a real validity signal.
 
-Caveat that keeps this honest: the log starts when the hook was installed, and a file read before that is invisible. Zero reads is evidence of non-reading only over the window the log covers. State the window.
+**Three blind spots, all measured — disclose them whenever you cite this signal.**
+
+1. **The window.** The log starts when the read-once hook was installed; a file read before that is invisible. Zero reads is evidence of non-reading only over the window the log covers. State the window.
+2. **Subagent reads are attributed to the parent session.** A parent plus N harvest agents collapses into one session id. Since per-skill fan-out is this skill's own Phase 3 architecture, the instrument systematically under-counts the very consumption pattern the skill prescribes. Use read *counts*, not distinct-session counts, when the question is "was this file opened at all".
+3. **Skill-tool injection does not traverse the hook.** When a skill fires via the `Skill` tool, its `SKILL.md` is injected, not `Read`. So a `SKILL.md` can have zero recorded reads across sessions that used it heavily. **Zero reads on a `SKILL.md` is evidence of nothing.** The signal is only meaningful for `references/` and `scripts/` — the files an agent must choose to open.
+
+Blind spot 3 is the sharp one: it inverts the inference. Without it you will read "zero reads" as "undiscoverable" for exactly the file that is always discoverable.
 
 ### Two limits that keep the numbers honest
 
@@ -42,11 +48,13 @@ Caveat that keeps this honest: the log starts when the hook was installed, and a
 
 ## Scoring
 
-The script emits per-skill rows, not a single number, because the signals are not commensurable and collapsing them hides the reason. A row looks like:
+The script emits per-skill rows, not a single number, because the signals are not commensurable and collapsing them hides the reason:
 
 ```
-| skill | last entry | uses since | open PENDING | unchecked | drift commits | friction hits | unread refs |
+| skill | last entry | invoked | read-in | unchecked | PENDING | drift | friction | unread refs |
 ```
+
+`invoked` and `read-in` stay in separate columns deliberately — they are different kinds of evidence and summing them produces a number that means nothing. Either one satisfies the gate.
 
 Rank by validation debt first, then friction, then drift. Usage gates every row.
 

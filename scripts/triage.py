@@ -262,7 +262,8 @@ def history_friction() -> list[tuple[float, str, str]]:
     return hits
 
 
-def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int], dict[str, list[str]]]:
+def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
+                                                dict[str, list[str]], dict[str, list[str]]]:
     """Stream session transcripts for Skill invocations and in-session friction.
 
     Never reads a file whole into memory -- the largest sessions exceed 60 MB.
@@ -275,8 +276,9 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int], 
     uses: dict[str, int] = {}
     friction: dict[str, int] = {}
     quotes: dict[str, list[str]] = {}
+    invocations: dict[str, list[str]] = {}
     if not PROJECTS.is_dir():
-        return uses, friction, quotes
+        return uses, friction, quotes, invocations
 
     files = [p for p in PROJECTS.rglob("*.jsonl")]
     files = [p for p in files if p.stat().st_mtime >= cutoff_ts]
@@ -288,12 +290,21 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int], 
             log(f"    ...{i}/{len(files)}")
         seen: set[str] = set()
         frictions: list[str] = []
+        args_seen: dict[str, str] = {}
         try:
             with path.open(encoding="utf-8", errors="replace") as fh:
                 for line in fh:
                     if '"name":"Skill"' in line:
-                        for m in re.finditer(r'"name":"Skill","input":\{"skill":"([^"]+)"', line):
+                        # Capture the args too: triage.md's selection gate demands a
+                        # *trace* per pick, and a bare count is not one. Mining these
+                        # and discarding them forced the first dogfood to re-grep the
+                        # transcripts by hand.
+                        for m in re.finditer(
+                                r'"name":"Skill","input":\{"skill":"([^"]+)"'
+                                r'(?:,"args":"((?:[^"\\]|\\.){0,160}))?', line):
                             seen.add(m.group(1))
+                            if m.group(2) and m.group(1) not in args_seen:
+                                args_seen[m.group(1)] = m.group(2)
                     elif '"role":"user"' in line or '"type":"user"' in line:
                         low = line.lower()
                         if any(f in low for f in FRICTION):
@@ -307,13 +318,17 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int], 
         except OSError:
             continue
 
+        day = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
         for s in seen:
             uses[s] = uses.get(s, 0) + 1
+            a = args_seen.get(s, "")
+            invocations.setdefault(s, []).append(
+                f"{day} — {a[:100]}" + ("…" if len(a) > 100 else "") if a else f"{day} — (no args)")
             if frictions:
                 friction[s] = friction.get(s, 0) + len(frictions)
                 quotes.setdefault(s, []).extend(frictions[:2])
 
-    return uses, friction, quotes
+    return uses, friction, quotes, invocations
 
 
 def _user_text(rec: dict) -> str:
@@ -365,10 +380,10 @@ def main() -> int:
     cutoff = min(dates) if dates else time.time() - 365 * 86400
 
     if args.fast:
-        uses, friction, quotes = {}, {}, {}
+        uses, friction, quotes, invocations = {}, {}, {}, {}
         log("  --fast: transcripts skipped; usage gate is advisory this run")
     else:
-        uses, friction, quotes = mine_transcripts(cutoff)
+        uses, friction, quotes, invocations = mine_transcripts(cutoff)
 
     hist = history_friction()
 
@@ -376,18 +391,23 @@ def main() -> int:
     for s in skills:
         led = ledgers[s.name]
         n_commits, sample = git_drift(s, led["last_date"])
-        since_ts = to_ts(led["last_date"])
+        # Strictly AFTER the entry date: a read on the entry's own day is the
+        # session that WROTE the entry, not evidence of later use. Counting it
+        # inflated skill-builder from 2 real uses to 4 on the first dogfood.
+        since_ts = to_ts(led["last_date"]) + 86400 if led["last_date"] else to_ts(None)
         # A "use" is an invocation OR a session that read the skill's files --
-        # the kernel-type skills are consumed by reference and never invoked.
+        # kernel-type skills are consumed by reference and never invoked. The two
+        # are reported separately and never summed; they are different evidence.
         read_sessions = {sess for ts, sess in reads.get(s.name, [])
                          if ts >= since_ts and sess}
         rows.append({
             "skill": s.name,
             "path": s,
             "led": led,
-            "uses": uses.get(s.name, 0) + len(read_sessions),
+            "uses": max(uses.get(s.name, 0), len(read_sessions)),
             "invoked": uses.get(s.name, 0),
             "read_sessions": len(read_sessions),
+            "invocations": invocations.get(s.name, [])[:4],
             "friction": friction.get(s.name, 0),
             "quotes": quotes.get(s.name, [])[:2],
             "drift": n_commits,
@@ -444,9 +464,12 @@ def main() -> int:
             continue
         if led["unchecked"] or led["pending"]:
             settle = ("usage unknown (--fast)" if args.fast
-                      else f"settleable — {r['uses']} session(s) have used it since")
+                      else f"settleable — invoked in {r['invoked']}, read in {r['read_sessions']} "
+                           f"session(s) since (never summed; different evidence)")
             print(f"- Validation debt: {led['unchecked']} unchecked box(es), "
                   f"{led['pending']} PENDING mention(s) in {led['last_label']}. {settle}.")
+        for inv in r["invocations"]:
+            print(f"- Invoked: {inv}")
         if r["drift"]:
             print(f"- Undigested drift: {r['drift']} commit(s) since {led['last_date']}:")
             for c in r["drift_sample"]:

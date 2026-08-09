@@ -6,13 +6,15 @@ The mechanism that turns a skill from "current instinct / borrowed confidence" i
 
 ## The loop
 
-0. **Settle** — before harvesting anything new, resolve what the last entry left open. Every `PENDING` verdict and every unchecked `- [ ]` in the ledger is a question this run is obliged to answer if the traces now exist to answer it. See §Settling first.
-1. **Harvest** — gather real traces of the skill in use. Real traces only — not imagined use. Sources per skill: `harvest-sources` table below and `triage.md`.
-2. **Patterns** — extract what recurred: friction, gaps, contradictions, silent-skip near-misses, things you *needed* that the skill didn't give you. Tag each `Impact: H/M/L, Effort: H/M/L`. Prioritize `Impact ÷ Effort`.
-3. **Hypotheses** — turn each kept pattern into a *specific* edit (file + change), not a vibe. "Add an integration-patterns section to nfr-checklist and point Phase 3 at it," not "improve integration guidance." Format and approval gate: `hypothesis-protocol.md`.
-4. **Apply** — make the edits. Record which pattern each closes.
-5. **Record** — write the entry. The loop is not done until the ledger says so.
-6. **Validate** — in a *later* harvest, i.e. step 0 of a future run.
+1. **Triage** — pick which skills have earned a run, from evidence. Skills with no traces since their last entry are excluded, not deprioritized. See `triage.md`.
+2. **Settle** — *per selected skill, before harvesting it:* resolve what its last entry left open. Every `PENDING` verdict and every unchecked `- [ ]` is a question this run is obliged to answer if the traces now exist to answer it. See §Settling first.
+3. **Harvest** — gather real traces of the skill in use. Real traces only — not imagined use. Sources: §Role variants below and `triage.md`.
+4. **Patterns** — extract what recurred: friction, gaps, contradictions, silent-skip near-misses, things you *needed* that the skill didn't give you. Tag each `Impact: H/M/L, Effort: H/M/L`. Prioritize `Impact ÷ Effort`.
+5. **Hypotheses** — turn each kept pattern into a *specific* edit (file + change), not a vibe. "Add an integration-patterns section to nfr-checklist and point its Phase 3 at it," not "improve integration guidance." Format, approval gate and block shape: `hypothesis-protocol.md`.
+6. **Apply** — make the edits. Record which pattern each closes.
+7. **Record** — write the entry. The loop is not done until the ledger says so.
+
+**Validation is not an eighth step.** It is step 2 of a *later* run. A loop whose final step is "validate someday" has no trigger and does not fire — which is precisely how this constellation accumulated 13 ledgers that never settled anything.
 
 ## The artifact
 
@@ -29,7 +31,7 @@ Each skill repo carries an **`EVOLUTION.md`** (projects use `wiki/decisions.md` 
 ### Validation results   (measured in a later harvest; verdict per change)
 ```
 
-Four ledgers in the constellation predate this convention and diverge in ways that are *history*, not error — `delivery` starts at Evolution 0 (Birth), `zalo-platform` uses `Birth` / `Round N`. Leave them. Normalizing a ledger's body rewrites the record of what was actually thought at the time. New entries use the canonical shape; `scripts/triage.py` parses both.
+Some ledgers predate this convention and diverge in ways that are *history*, not error — `delivery` starts at Evolution 0 (Birth), `zalo-platform` uses `Birth` / `Round N`. Leave them. Normalizing a ledger's body rewrites the record of what was actually thought at the time. New entries use the canonical shape; `scripts/triage.py` parses both.
 
 ## Verdict vocabulary (one set, no synonyms)
 
@@ -40,7 +42,7 @@ Four ledgers in the constellation predate this convention and diverge in ways th
 | `REVISED` | Correct machinery, wrong scope. Survives with a selector naming when it applies. | Steps 1–3 of the non-adoption ladder below. The new selector inherits `PENDING`. |
 | `REVERT` | Wrong. Removed. | Step 4 of the ladder, **plus a post-mortem recording the mechanism of failure**. |
 
-`dev/modes/evolve.md`'s older `[keep/revert/refine]` triple is retired — `refine` collapsed the scoping case and the wrongness case into one word, which is exactly the mistake §non-adoption exists to prevent.
+The `[keep/revert/refine]` triple used by the retired `dev` evolve mode (removed 2026-08-09, `dev@e2fe315`) does not survive here — `refine` collapsed the scoping case and the wrongness case into one word, which is exactly the mistake §non-adoption exists to prevent.
 
 ## The PENDING discipline (the anti-overconfidence rule)
 
@@ -65,11 +67,13 @@ Record the outcome as **`REVISED`** when 1–3 apply: the change survives, its a
 
 The corollary for **harvesting**: the second engagement's greatest value is rarely confirming the first. It's exposing which parts of the first were *context* wearing the costume of *principle*. Go in looking for that.
 
-## Settling first (step 0)
+## Settling first (Phase 2)
 
-The loop's second half is the half that doesn't happen. Measured across this constellation on 2026-08-09: 13 ledgers, 2,622 lines, and only three changes ever reached `KEEP` — because "validate in a *later* harvest" named no owner and fired on no trigger. Every other entry sits at `PENDING` indefinitely, which reads as humility and functions as amnesia.
+The loop's second half is the half that doesn't happen. Measured across this constellation on 2026-08-09: 15 ledgers, 2,698 lines, and **13 of them had never settled a single verdict** — `dev` and `solution-architect` are the only two that ever moved anything off `PENDING`, because "validate in a *later* harvest" named no owner and fired on no trigger. Everything else sits at `PENDING` indefinitely, which reads as humility and functions as amnesia.
 
-So **step 0 runs before step 1, every time**, and it is the cheapest high-value work in the loop:
+(An earlier draft of this file claimed "only three changes ever reached `KEEP`". That was wrong — `dev`, `solution-architect` and `drawio` between them carry a dozen. It was caught by this skill's first dogfood, which is the correct outcome and an uncomfortable one for a file whose subject is not trusting unverified claims. The ledger-level count above is countable with one `grep`.)
+
+So **settling runs before harvesting, every time**, and it is the cheapest high-value work in the loop:
 
 1. Read the skill's most recent entry with an unresolved verdict.
 2. For each unchecked `- [ ]`: did the traces since that entry actually exercise the change? Name the trace or say there is none.

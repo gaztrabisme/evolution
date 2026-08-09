@@ -1,6 +1,6 @@
 ---
 name: evolution
-description: "Evolve the skills themselves from their own real traces — pick which ones have earned a change, harvest the evidence, propose specific edits, apply them, and settle the verdicts previous runs left open. USE WHEN you say evolve/meta/improve my skills (with or without naming one), when a gate keeps getting skipped or a correction keeps recurring, after a stretch of real use, or when EVOLUTION.md ledgers have gone stale at PENDING. Not `skill-builder` — that authors and shapes a skill at birth; this changes an existing one on evidence. Not `core` — that states the gate; this is the mechanism. Keywords: evolve, evolution, meta, self-improve, retrospective, harvest, EVOLUTION.md, PENDING, KEEP, REVISED, validate, skill drift, lessons learned, what went wrong, improve the skill, triage skills."
+description: "Evolve the skills themselves from their own real traces — pick which ones have earned a change, harvest the evidence, propose specific edits, apply them, and settle the verdicts previous runs left open. USE WHEN you say evolve/meta/improve my skills (with or without naming one), when a gate keeps getting skipped or a correction keeps recurring, after a stretch of real use, or when EVOLUTION.md ledgers have gone stale at PENDING. Not `skill-builder` — that authors and shapes a skill at birth, and distils lessons from *documents*; this upgrades a working skill from lessons in *completed real work*. Not `core` — that states the gate; this is the mechanism. Keywords: evolve, evolution, meta, self-improve, retrospective, harvest, EVOLUTION.md, PENDING, KEEP, REVISED, validate, skill drift, lessons learned, upgrade the skill, what went wrong, improve the skill, triage skills, post-engagement retro."
 license: MIT
 ---
 
@@ -22,7 +22,7 @@ Turns the constellation's own traces into skill improvements. You invoke it with
 ## Principles
 
 1. **No trace, no change.** A skill with no use since its last entry is excluded from the run, not deprioritized. An invented pattern applied as a real edit is the exact failure this discipline exists to prevent.
-2. **Settle before you harvest.** Step 0 resolves the previous entry's open verdicts. This is the half of the loop that never ran: 13 ledgers, 2,622 lines, three changes ever reaching `KEEP`. A run that only settles verdicts and finds nothing new is a successful run.
+2. **Settle before you harvest.** Phase 2 resolves the previous entry's open verdicts *before* looking for new patterns. This is the half of the loop that never ran: measured 2026-08-09, **13 of 15 ledgers had never settled a single verdict** — only `dev` and `solution-architect` ever moved anything off `PENDING`. A run that only settles verdicts and finds nothing new is a successful run.
 3. **Non-adoption is a scoping signal before it is a validity signal.** Before `REVERT`, ask in order: scoped too broadly (→ add a selector, verdict `REVISED`) · undiscoverable · too heavy · only then wrong. Collapsing these teaches the loop never to generalize.
 4. **A hypothesis names a file.** "Improve X" is a pattern, not a hypothesis. If you can't predict which future trace changes, it can't be validated and it will sit at `PENDING` forever.
 5. **One approval stop.** Everything up to writing runs unattended; the whole hypothesis set is presented once. Never self-modify without approval — and never weaken an Integrity Constraint or the Wu Wei filter at all.
@@ -32,17 +32,19 @@ Turns the constellation's own traces into skill improvements. You invoke it with
 
 | Phase | Goal | Primary artifact |
 |---|---|---|
-| **0 Settle** | Resolve the last entry's open `- [ ]` and `PENDING` → `KEEP` / `REVISED` / `REVERT`, or `PENDING` *with a stated reason* | verdict updates in each ledger |
 | **1 Triage** | Score every skill on evidence; pick 3–5; state a skip reason for the rest | candidate table (`scripts/triage.py`) |
-| **2 Harvest** | One agent per selected skill, in parallel, over that skill's real traces | harvest report per skill |
-| **3 Patterns** | Rank recurring gaps/friction by Impact ÷ Effort, each with its proof | ranked pattern list |
-| **4 Hypotheses** | One specific edit per pattern. **Stop for approval — the whole set at once.** | ranked hypothesis block |
-| **5 Apply** | Edit; one commit per hypothesis, in the skill's own repo | diffs |
-| **6 Record** | The entry, verdict `PENDING`, with the checklist a future step 0 will settle | `<skill>/EVOLUTION.md` |
+| **2 Settle** | *Per selected skill, before harvesting it:* resolve the last entry's open `- [ ]` and `PENDING` → `KEEP` / `REVISED` / `REVERT`, or `PENDING` *with a stated reason*. `KEEP` needs **≥2 independent real uses** | verdict updates in that ledger |
+| **3 Harvest** | Gather that skill's real traces since its last entry | harvest report per skill |
+| **4 Patterns** | Rank recurring gaps/friction by Impact ÷ Effort, each with its proof | ranked pattern list |
+| **5 Hypotheses** | One specific edit per pattern. **Stop for approval — the whole set at once.** | approval block (`references/templates/approval-block.md`) |
+| **6 Apply** | Edit; one commit per hypothesis, in the skill's own repo | diffs |
+| **7 Record** | The entry, verdict `PENDING`, with the checklist a future Phase 2 will settle | `<skill>/EVOLUTION.md` |
 
-Run it: `python3 scripts/triage.py` (add `--fast` to skip transcript mining), then dispatch `references/templates/harvest-brief.md` per selected skill.
+Phases 2–4 run **inside** one agent per selected skill, in parallel — settling is scoped to the skills triage picked, never to all 15 ledgers. Phase 5 reconciles them into a single block. This numbering is the same in `references/loop.md`; nowhere in this skill does a bare phase number mean two things.
 
-**Scale to the ask.** "Evolve everything" gets the full run. "That gate was unnecessary" gets phases 4–6 on one skill — the trace already exists, it's the user's own sentence, and `dev/modes/evolve.md`'s rule was to trim immediately rather than wait for a cycle. Ceremony on a one-line correction is the anti-pattern, not the discipline.
+Run it: `python3 evolution/scripts/triage.py` from the Skills root (add `--fast` to skip transcript mining), then dispatch `references/templates/harvest-brief.md` per selected skill.
+
+**Scale to the ask.** "Evolve everything" gets the full run. "That gate was unnecessary" gets phases 5–7 on one skill — the trace already exists, it's the user's own sentence, and the retired `dev` evolve mode's rule was to trim immediately rather than wait for a cycle. Ceremony on a one-line correction is the anti-pattern, not the discipline.
 
 ## Gates (declared, inherited from core)
 
@@ -66,16 +68,17 @@ Run it: `python3 scripts/triage.py` (add `--fast` to skip transcript mining), th
 ## Composition
 
 - **Inherits:** `core` — integrity constraints, gate-by-artifact, grounding gate, wiki protocol, pushback-and-teach.
-- **Owns, because it was scattered:** the loop definition (from `core`), the executable cycle (from `dev/modes/evolve.md`), the ledger skeleton (from `skill-builder`), and — new — the triage that picks the targets.
+- **Owns, because it was scattered:** the loop definition (from `core`), the executable cycle (from the retired `dev` evolve mode), the ledger skeleton (from `skill-builder`), and — new — the triage that picks the targets.
 - **Hands off to:** `skill-builder` when a hypothesis turns out to need new structure rather than new content; `dev` when the finding is about software rather than a skill.
 - **Consumed by:** every skill in the constellation. Each ledger's preamble points here for the mechanism.
-- **Origin:** extracted 2026-08-09 from `core/references/evolution-loop.md` + `dev/modes/evolve.md` + `skill-builder`'s templates, after the constellation reached 15 skills and 13 ledgers with no way to decide which one to open.
+- **Origin:** extracted 2026-08-09 from the loop definition then in `core`, the evolve mode then in `dev`, and `skill-builder`'s ledger template — all three removed at their old paths in that day's commits, after the constellation reached 15 skills and 13 ledgers with no way to decide which one to open.
 
 ## References
 
 - `references/loop.md` — the canonical loop, the `PENDING/KEEP/REVISED/REVERT` vocabulary, the non-adoption ladder, settle-first, validation approaches, per-role harvest sources.
 - `references/triage.md` — the selection mechanism: signals, the no-trace gate, what the discoverability data can and cannot prove, how to choose and how to record a skip.
 - `references/hypothesis-protocol.md` — hypothesis format, the five rules, what may and may not be modified, the approval gate, commit and record discipline.
+- `references/templates/approval-block.md` — the Phase 5 artifact: settled verdicts, ranked hypotheses, the rejected list, blast radius, the ask. The one thing a human reads.
 - `references/templates/EVOLUTION.md.skeleton` — the ledger shape a new skill starts from.
 - `references/templates/harvest-brief.md` — the per-skill harvest agent brief, including the trace-source table and the required `Nothing-found` section.
 - `scripts/triage.py` — computes the candidate table from ledgers, git logs, read-once stats, prompt history and session transcripts. `--fast` skips transcripts.

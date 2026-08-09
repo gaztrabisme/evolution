@@ -1,6 +1,6 @@
 # Hypothesis Protocol
 
-How a harvested pattern becomes an approved edit. Generalized from `dev/modes/evolve.md` Phases 3–4, which scoped this to one skill for reasons that were historical rather than principled.
+How a harvested pattern becomes an approved edit. Generalized from the retired `dev` evolve mode (removed 2026-08-09, `dev@e2fe315`), Phases 3–4, which scoped this to one skill for reasons that were historical rather than principled.
 
 ## From pattern to hypothesis
 
@@ -15,7 +15,7 @@ A pattern is an observation. A hypothesis is a **falsifiable edit**. The gap bet
 **Target file(s):** <exact paths>
 **Predicted effect:** <what should change in future traces, observably>
 **Risk:**           <what could get worse>
-**Validation:**     <what a future step-0 should look for to settle this>
+**Validation:**     <what a future Phase 2 should look for to settle this>
 **Impact / Effort:** H|M|L / H|M|L
 ```
 
@@ -23,7 +23,7 @@ A pattern is an observation. A hypothesis is a **falsifiable edit**. The gap bet
 
 1. **One change per hypothesis.** No bundles. A bundle cannot be reverted cleanly and cannot be validated at all — when it half-works you learn nothing.
 2. **Specific, not vague.** If the hypothesis doesn't name a file, it isn't one yet.
-3. **Predict the effect.** If you can't state which future trace would change, the hypothesis is too vague to validate — and it will sit at `PENDING` forever, which is how the constellation got 12 stuck ledgers.
+3. **Predict the effect.** If you can't state which future trace would change, the hypothesis is too vague to validate — and it will sit at `PENDING` forever, which is how the constellation got 13 ledgers that never settled anything.
 4. **State rollback criteria.** "If the next two runs still show X, revert." Written now, while you still believe in it, not later when you're defending it.
 5. **Wu Wei filter.** Does this pattern cause a failure you can point to, or is it theoretical purity? Structure earns existence by being referenced. A gate nobody trips is cost wearing the costume of rigour.
 
@@ -42,7 +42,7 @@ A pattern is an observation. A hypothesis is a **falsifiable edit**. The gap bet
 | **Integrity Constraints** | **Never** | Foundational. A loop that can weaken its own honesty rules is not a loop, it is a ratchet in the wrong direction. The human edits these directly. |
 | **The Wu Wei filter** | **Never** | Philosophy doesn't optimize; it guides. |
 
-The two `Never` rows exist because a self-modifying system's first optimization is always to relax whatever constrains it. They are inherited, verbatim, from `dev/modes/evolve.md` — the one part of that file that was never scoped to `dev`.
+The two `Never` rows exist because a self-modifying system's first optimization is always to relax whatever constrains it. They are inherited verbatim from that retired mode — the one part of that file that was never scoped to `dev`.
 
 ## The approval gate
 
@@ -54,6 +54,9 @@ What the block must make possible without opening anything else:
 - Judging each hypothesis on its own (so a subset approval is meaningful).
 - Seeing which files change, so blast radius is visible before the diff exists.
 - Seeing what was *rejected* during pattern-mining and why — a hypothesis list with no discards means the Wu Wei filter didn't run.
+- Seeing the verdicts this run **settled**, which lead the block: settling is the half that historically never ran.
+
+**Shape: `templates/approval-block.md`.** Don't improvise it. Every other step in this loop has a template; the one artifact a human actually reads went without one until the first dogfood pointed out that the writer had to invent the format under time pressure at the exact moment precision matters most.
 
 Never self-modify without approval. A convenient exception is how this stops being a loop and starts being drift.
 
@@ -69,7 +72,7 @@ Never self-modify without approval. A convenient exception is how this stops bei
    ```
    Evolution 9 log: <theme, including the honest limits>
    ```
-4. **Verdict `PENDING`** on everything applied, with the validation checklist a future step 0 will settle. An applied change is a hypothesis until traces say otherwise — including the ones you are confident about, especially those.
+4. **Verdict `PENDING`** on everything applied, with the validation checklist a future Phase 2 will settle. An applied change is a hypothesis until traces say otherwise — including the ones you are confident about, especially those.
 
 ## Anti-patterns
 
