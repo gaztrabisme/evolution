@@ -50,7 +50,7 @@ The `[keep/revert/refine]` triple used by the retired `dev` evolve mode (removed
 - It earns **`KEEP`** only after **≥2 independent real uses** exercise it without new friction.
 - A change that fails in the field gets **`REVERT` + a post-mortem** recording the *mechanism* of failure, so nobody re-runs the dead end. A documented negative result is reusable knowledge; an undocumented one gets repeated.
 
-This is why `solution-architect` and `ms-ai-discovery` (both document-distilled) must sit at `PENDING` until real engagements validate them — borrowed confidence is not evidence.
+This is why `solution-architect` and `ai-discovery-workshop` (both document-distilled) must sit at `PENDING` until real engagements validate them — borrowed confidence is not evidence.
 
 ## Non-adoption is a scoping signal before it is a validity signal
 
@@ -102,7 +102,7 @@ Comparison signals, generalized (each skill substitutes its own): recurrence of 
 | `business-intelligence` | win/loss debriefs, deal outcomes | framework/positioning/gate edits — learning about *the skill*, not just the deal |
 | `solution-architect` | response outcomes, RFP conversion, dogfood runs | lifecycle/reference/template edits |
 | `delivery` | completed engagements: estimate vs actual, contested criteria, obligation slippage | lifecycle/tracker edits — **and a correction pushed back to `solution-architect`**, since a contested criterion was written ambiguously upstream |
-| `ms-ai-discovery` | workshop outcomes vs distilled method | method/script edits; validate the PDF's claims |
+| `ai-discovery-workshop` | workshop outcomes vs distilled method | method/script edits; validate the PDF's claims |
 | `skill-builder` | skills authored + their later EVOLUTION verdicts | convention/checklist edits |
 | `conductor` | run ledgers in project `wiki/log.md`; forks decided forward | routing-table + protocol edits |
 | execution-layer (`omlx`, `gsheets`, `media-gen`, `zalo-platform`, `drawio`, `pptx`) | sessions that called the substrate; claims contradicted by the tool's actual behaviour | corrected claims **with the reproducing command**, trap/troubleshooting edits |

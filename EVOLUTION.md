@@ -42,7 +42,7 @@ Not modified (validated as already-sound): the no-trace gate, the non-adoption l
 
 ### Also shipped this run (not hypotheses — integrity gaps closed on sight)
 
-`ms-ai-discovery/EVOLUTION.md` and `harness-operator/EVOLUTION.md`, both at Evolution 0. Each skill claimed the loop and shipped no artifact for it, so the verdict each declared had nowhere to live.
+`ai-discovery-workshop/EVOLUTION.md` and `harness-operator/EVOLUTION.md`, both at Evolution 0. Each skill claimed the loop and shipped no artifact for it, so the verdict each declared had nowhere to live.
 
 ### Validation results (settled by a later run's Phase 2)
 
