@@ -1,3 +1,12 @@
 .DS_Store
 __pycache__/
 *.pyc
+
+# Engagement source material never belongs in this repo.
+*.xlsx
+*.docx
+*.pptx
+*.pdf
+
+# Scrub configuration is kept outside this repo.
+.scrub-denylist
