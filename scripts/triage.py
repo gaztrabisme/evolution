@@ -274,6 +274,25 @@ def history_friction() -> list[tuple[float, str, str]]:
     return hits
 
 
+def _session_key(path: Path) -> str:
+    """The parent session a transcript belongs to.
+
+    A subagent writes its own `.jsonl` under `<session-uuid>/subagents/...`, so
+    counting *files* counts one consultation as several. `zalo-platform` showed
+    two invocations and had one: a parent at 08:09:36Z and its own workflow
+    child at 08:16:34Z -- same session, same project, same task.
+
+    That matters more than a tidy number. `KEEP` is defined as **>=2
+    independent real uses**, so a bug that splits one use into two lets the loop
+    certify its own changes on its own echo. Collapse children onto their parent.
+    """
+    parts = path.parts
+    if "subagents" in parts:
+        i = parts.index("subagents")
+        return "/".join(parts[max(0, i - 2):i])
+    return f"{path.parent.name}/{path.stem}"
+
+
 def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
                                                 dict[str, list[str]], dict[str, list[str]]]:
     """Stream session transcripts for Skill invocations and in-session friction.
@@ -289,11 +308,18 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
     friction: dict[str, int] = {}
     quotes: dict[str, list[str]] = {}
     invocations: dict[str, list[str]] = {}
+    # skill -> parent sessions that invoked it. `uses` is the size of this set,
+    # not a file count -- see _session_key.
+    sessions: dict[str, set[str]] = {}
     if not PROJECTS.is_dir():
         return uses, friction, quotes, invocations
 
     files = [p for p in PROJECTS.rglob("*.jsonl")]
     files = [p for p in files if p.stat().st_mtime >= cutoff_ts]
+    # Parents before their subagents, so the invocation kept for a session is the
+    # one the *user* made -- its args and its timestamp -- rather than whichever
+    # child rglob happened to reach first.
+    files.sort(key=lambda p: ("subagents" in p.parts, str(p)))
     total_mb = sum(p.stat().st_size for p in files) / 1e6
     log(f"  transcripts: {len(files)} files, {total_mb:.0f} MB since cutoff")
 
@@ -317,7 +343,7 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
                         # that is still open gets touched today, so file mtime stamps
                         # every invocation in it with today's date -- zalo's "2026-08-12
                         # use" was 08-06, media-gen's "07-16" was 07-06. A wrong date on
-                        # a trace is worse than none: it is what the selection gate
+                        # a trace is worse than no date: it is what the selection gate
                         # reads as recency.
                         stamp = TS_RE.search(line)
                         for m in re.finditer(
@@ -343,8 +369,13 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
 
         # mtime survives only as the fallback for a record carrying no timestamp.
         mtime_day = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+        key = _session_key(path)
         for s in seen:
-            uses[s] = uses.get(s, 0) + 1
+            known = sessions.setdefault(s, set())
+            fresh = key not in known
+            known.add(key)
+            if not fresh:
+                continue        # a subagent of a session already counted
             day = day_seen.get(s, mtime_day)
             a = args_seen.get(s, "")
             invocations.setdefault(s, []).append(
@@ -352,6 +383,7 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
             if frictions:
                 friction[s] = friction.get(s, 0) + len(frictions)
                 quotes.setdefault(s, []).extend(frictions[:2])
+    uses = {s: len(v) for s, v in sessions.items()}
 
     return uses, friction, quotes, invocations
 
