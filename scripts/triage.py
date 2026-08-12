@@ -39,6 +39,9 @@ ENTRY_RE = re.compile(
     re.IGNORECASE,
 )
 DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+# The record's own clock, for dating a trace. Cheap enough to run per matching
+# line; a full json.loads on every Skill line would cost more than the mining.
+TS_RE = re.compile(r'"timestamp":"(\d{4}-\d{2}-\d{2})')
 UNCHECKED_RE = re.compile(r"^\s*[-*]\s+\[ \]")
 PENDING_RE = re.compile(r"\bPENDING\b")
 
@@ -300,6 +303,7 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
         seen: set[str] = set()
         frictions: list[str] = []
         args_seen: dict[str, str] = {}
+        day_seen: dict[str, str] = {}
         try:
             with path.open(encoding="utf-8", errors="replace") as fh:
                 for line in fh:
@@ -308,10 +312,20 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
                         # *trace* per pick, and a bare count is not one. Mining these
                         # and discarding them forced the first dogfood to re-grep the
                         # transcripts by hand.
+                        #
+                        # And take the date off the *record*, not the file. A session
+                        # that is still open gets touched today, so file mtime stamps
+                        # every invocation in it with today's date -- zalo's "2026-08-12
+                        # use" was 08-06, media-gen's "07-16" was 07-06. A wrong date on
+                        # a trace is worse than none: it is what the selection gate
+                        # reads as recency.
+                        stamp = TS_RE.search(line)
                         for m in re.finditer(
                                 r'"name":"Skill","input":\{"skill":"([^"]+)"'
                                 r'(?:,"args":"((?:[^"\\]|\\.){0,160}))?', line):
                             seen.add(m.group(1))
+                            if stamp and m.group(1) not in day_seen:
+                                day_seen[m.group(1)] = stamp.group(1)
                             if m.group(2) and m.group(1) not in args_seen:
                                 args_seen[m.group(1)] = m.group(2)
                     elif '"role":"user"' in line or '"type":"user"' in line:
@@ -327,9 +341,11 @@ def mine_transcripts(cutoff_ts: float) -> tuple[dict[str, int], dict[str, int],
         except OSError:
             continue
 
-        day = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+        # mtime survives only as the fallback for a record carrying no timestamp.
+        mtime_day = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
         for s in seen:
             uses[s] = uses.get(s, 0) + 1
+            day = day_seen.get(s, mtime_day)
             a = args_seen.get(s, "")
             invocations.setdefault(s, []).append(
                 f"{day} — {a[:100]}" + ("…" if len(a) > 100 else "") if a else f"{day} — (no args)")
