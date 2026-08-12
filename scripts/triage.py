@@ -191,24 +191,33 @@ def read_once_counts() -> tuple[dict[str, int], dict[str, list[tuple[float, str]
     earliest = None
     if not READ_ONCE.is_file():
         return counts, reads, None
-    marker = "/Work/Skills/"
+    # Every skill file is reachable by two paths: the tree's own
+    # `.../Work/Skills/<skill>/...` and `~/.claude/skills/<skill>/...`, which is
+    # a symlink to it. The hook logs whichever path the reader used, and *75% of
+    # reads arrive under the symlink* (566 of 759, measured 2026-08-12). Matching
+    # one arm reported 6 of 8 zalo digests and 5 of 5 omlx references as
+    # never-opened when several had been read -- a measurement artifact that
+    # reads exactly like a "trim this, nothing opens it" verdict. Normalise both
+    # arms onto the tree path so `unread_refs` compares like with like.
+    markers = ("/Work/Skills/", "/.claude/skills/")
     with READ_ONCE.open(encoding="utf-8", errors="replace") as fh:
         for line in fh:
-            if marker not in line:
+            if not any(m in line for m in markers):
                 continue
             try:
                 rec = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            p = rec.get("path", "")
-            if marker not in p:
+            raw = rec.get("path", "")
+            tail = next((raw.split(m, 1)[1] for m in markers if m in raw), None)
+            if tail is None:
                 continue
+            p = str(SKILLS_ROOT / tail)
             counts[p] = counts.get(p, 0) + 1
             ts = rec.get("ts")
             if isinstance(ts, (int, float)):
                 if earliest is None or ts < earliest:
                     earliest = ts
-                tail = p.split(marker, 1)[1]
                 name = tail.split("/", 1)[0]
                 reads.setdefault(name, []).append((float(ts), rec.get("session", "")))
     window = (datetime.fromtimestamp(earliest, tz=timezone.utc).strftime("%Y-%m-%d")
